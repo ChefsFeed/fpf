@@ -3,7 +3,12 @@ require 'bundler'
 Bundler.require
 
 require 'rack/deflater'
-require 'fpf/app'
+require 'fpf'
+
+require 'sidekiq/web'
+map '/workers' do
+  run Sidekiq::Web
+end
 
 use Rack::Deflater
 run FullPageFetcher::App

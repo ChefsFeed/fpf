@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+concurrency=${SIDEKIQ_CONCURRENCY:-20}
+env=${RACK_ENV:-development}
+config_file='./script/worker.rb'
+tag=ramen
+
+queues="
+  default
+"
+
+function print_queue_config() {
+  for q in $queues
+  do
+    echo "-q $q "
+  done
+}
+
+queue_config=`print_queue_config`
+set -x
+
+sidekiq -v -g "$tag" -c $concurrency -e $env -r $config_file $queue_config

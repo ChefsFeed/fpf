@@ -1,1 +1,2 @@
-server: bundle exec puma -p $PORT --dir "$PWD" -e $RACK_ENV -t ${CONCURRENCY_MIN:-2}:${CONCURRENCY_MAX:-6} -w ${CONCURRENCY_WORKERS:-1}
+server: bundle exec ./script/server
+worker: bundle exec ./script/worker
