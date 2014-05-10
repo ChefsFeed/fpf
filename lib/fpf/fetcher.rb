@@ -42,11 +42,18 @@ module FullPageFetcher
     end
 
     def self.l
-      @logger ||= Logger.new(STDOUT)
+      @@logger ||=
+        Logger.new(STDOUT).tap do |logger|
+          logger.formatter = proc do |sev, date, prog, msg|
+            thread_id = sprintf '%x', Thread.current.object_id
+            formatted_date = date.strftime "%Y-%m-%d %H:%M:%S"
+            [ formatted_date, sev, thread_id, msg ].join(' ')
+          end
+        end
     end
 
     def l
-      @logger ||= Logger.new(STDOUT)
+      self.class.l
     end
   end
 
