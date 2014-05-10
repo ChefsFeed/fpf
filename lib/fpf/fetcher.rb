@@ -7,7 +7,9 @@ module FullPageFetcher
 
     def initialize(path)
       @path = path
-      @max_retries = 10
+
+      #maximum cycles of 1 sec to wait for request to complete
+      @max_wait = 10
     end
 
     def fetch
@@ -32,12 +34,12 @@ module FullPageFetcher
     private
 
     def wait(&block)
-      @retries = 0
+      @waited = 0
       loop do
         sleep(1)
         yield
-        @retries += 1
-        break if @max_retries < @retries
+        @waited += 1
+        break if @waited > @max_wait
       end
     end
 
