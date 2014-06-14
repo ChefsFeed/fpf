@@ -1,0 +1,46 @@
+#!/usr/bin/env ruby
+
+[:INT, :QUIT].each do |signal|
+  Signal.trap(signal) do
+    $browsers.values.each do |wpid| 
+      Process.kill(signal, wpid)
+    end
+  end
+end
+
+port_start = 8910
+port_count = 10
+
+if ENV.has_key?('FPF_PHANTOM_PORT_START')
+  port_start = ENV['FPF_PHANTOM_PORT_START'].to_i
+end
+
+if ENV.has_key?('FPF_PHANTOM_PORT_COUNT')
+  port_count = ENV['FPF_PHANTOM_PORT_COUNT'].to_i
+end
+
+ports = port_start...(port_start + port_count)
+
+ports = 8910...8920
+
+$browsers = {}
+
+log_level = "DEBUG"
+
+ports.each do |port|
+  log_file = "log/webdriver_#{port}.log"
+
+  cmd =  "phantomjs"
+  cmd += " --webdriver=#{port}"
+  cmd += " --webdriver-logfile=#{log_file}" 
+  cmd += " --webdriver-loglevel=#{log_level} > /dev/null 2>&1"
+
+  STDOUT.puts "Phantom: #{port}"
+  pid = fork do 
+    Process.exec(cmd)
+  end
+
+  $browsers[port] = pid
+end
+
+Process.waitall

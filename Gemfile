@@ -9,5 +9,7 @@ gem 'pry', require: false
 gem 'puma', require: false
 gem 'rack-protection', require: false
 gem 'rake', require: false
-gem 'sidekiq', '3.0.1', require: false
-gem 'sinatra', '>= 1.3.0', :require => nil
+gem 'redis', require: false
+gem 'selenium-webdriver', require: false
+gem 'tilt', require: false
+

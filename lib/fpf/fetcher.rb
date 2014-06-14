@@ -1,61 +1,56 @@
 require 'fpf'
+require 'fpf/logger'
+require 'selenium-webdriver'
+require 'uri'
 
 module FullPageFetcher
+
   class Fetcher
 
-    attr_reader :path
+    include FullPageFetcher::Logger
 
-    def initialize(path)
-      @path = path
-
-      #maximum cycles of 1 sec to wait for request to complete
-      @max_wait = 10
+    def initialize(url, options = nil)
+      @url = url
+      @port = URI.parse(url).port
+      @options ||= {}
+      @base_url = @options[:base_url]
+      @driver = Selenium::WebDriver.for(:remote, url: @url)
+      logger.info @driver.send :bridge
     end
 
-    def fetch
-      page = FullPage.find(path)
-      return page unless page.nil?
-      request
-      wait_for_page
-    end
+    def fetch(path)
+      uri = URI.parse(base_url + path)
+      l.info "[WD:#{@port}] Requested path: #{uri}"
+      @driver.get uri
 
-    def request
-      l.info "Requesting Page: #{path}"
-      RequestPage.perform_async(path)
-    end
-
-    def wait_for_page
-      wait do
-        page = FullPage.find(path)
-        break page unless page.nil?
+      wait_for(10) do |n|
+        begin
+          element = @driver.find_element(xpath: '//*/meta[starts-with(@property, \'og:image\')]')
+          content = element.attribute('content')
+          if content && content != ''
+            content
+          end
+        rescue Selenium::WebDriver::Error::NoSuchElementError => e
+          nil
+        end
       end
+
+      @driver.page_source
     end
 
-    private
+    def base_url
+      @base_url ||= 'http://localhost:5002'
+    end
 
-    def wait(&block)
-      @waited = 0
+    def wait_for(max_times, &block)
+      @times = 0
       loop do
         sleep(1)
-        yield
-        @waited += 1
-        break if @waited > @max_wait
+        @times += 1
+        thing = block.call(@times)
+        return thing unless thing.nil?
+        break thing if @times >= max_times
       end
-    end
-
-    def self.l
-      @@logger ||=
-        Logger.new(STDOUT).tap do |logger|
-          logger.formatter = proc do |sev, date, prog, msg|
-            thread_id = sprintf '%x', Thread.current.object_id
-            formatted_date = date.strftime "%Y-%m-%d %H:%M:%S"
-            [ formatted_date, sev, thread_id, msg ].join(' ')
-          end
-        end
-    end
-
-    def l
-      self.class.l
     end
   end
 
