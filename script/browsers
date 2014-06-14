@@ -22,7 +22,6 @@ def shutdown(signal = :QUIT)
 end
 
 def save_child
-  return if $shutdown
   cpid = Process.wait
   if (res = $browsers.rassoc(cpid))
     port = res.first
@@ -32,7 +31,7 @@ end
 
 Signal.trap(:INT)  { shutdown(signal) }
 Signal.trap(:QUIT) { shutdown(signal) }
-Signal.trap(:CLD)  { save_child }
+Signal.trap(:CLD)  { save_child unless $shutdown }
 
 port_start = ENV.fetch('FPF_PHANTOM_PORT_START', 8910).to_i
 port_count = ENV.fetch('FPF_PHANTOM_PORT_COUNT', 10).to_i
