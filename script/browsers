@@ -31,6 +31,19 @@ def save_child
   end
 end
 
+def port_open?(port, seconds = 1)
+  Timeout::timeout(seconds) do
+    begin
+      TCPSocket.new('localhost', port).close
+      true
+    rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH
+      false
+    end
+  end
+rescue Timeout::Error
+  false
+end 
+
 Signal.trap(:INT)  { shutdown(signal) }
 Signal.trap(:QUIT) { shutdown(signal) }
 Signal.trap(:CLD)  { save_child unless $shutdown }
@@ -41,6 +54,9 @@ ports = port_start...(port_start + port_count)
 
 $shutdown = false
 $browsers = {}
-ports.each {|port| $browsers[port] = launch(port) }
+ports.each do |port| 
+  raise "Phantom running on #{port}? Can't bind to it. " if port_open?(port)
+  $browsers[port] = launch(port)
+end
 
 Process.waitall
