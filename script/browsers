@@ -1,9 +1,7 @@
 #!/usr/bin/env ruby
 
-$shutdown = false
-
 def launch(port)
-  log_level = "DEBUG"
+  log_level = ENV.fetch('FPF_PHANTOM_LOG_LEVEL', 'INFO')
   log_file = "log/webdriver_#{port}.log"
   cmd =  "phantomjs"
   cmd += " --webdriver=#{port}"
@@ -23,11 +21,8 @@ def shutdown(signal = :QUIT)
   end
 end
 
-[:INT, :QUIT].each do |signal|
-  Signal.trap(signal) { shutdown(signal) }
-end
-
-Signal.trap(:CLD) do
+def save_child
+  return if $shutdown
   cpid = Process.wait
   if (res = $browsers.rassoc(cpid))
     port = res.first
@@ -35,18 +30,16 @@ Signal.trap(:CLD) do
   end
 end
 
+Signal.trap(:INT)  { shutdown(signal) }
+Signal.trap(:QUIT) { shutdown(signal) }
+Signal.trap(:CLD)  { save_child }
+
 port_start = ENV.fetch('FPF_PHANTOM_PORT_START', 8910).to_i
 port_count = ENV.fetch('FPF_PHANTOM_PORT_COUNT', 10).to_i
-
 ports = port_start...(port_start + port_count)
 
+$shutdown = false
 $browsers = {}
-
-ports.each do |port|
-  pid = launch(port)
-  $browsers[port] = pid
-end
+ports.each {|port| $browsers[port] = launch(port) }
 
 Process.waitall
-
-
