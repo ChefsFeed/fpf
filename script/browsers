@@ -55,7 +55,11 @@ ports = port_start...(port_start + port_count)
 $shutdown = false
 $browsers = {}
 ports.each do |port| 
-  raise "Phantom running on #{port}? Can't bind to it. " if port_open?(port)
+  if port_open?(port)
+    STDERR.puts "Phantom running on #{port}? Can't bind to it. Halt. " if port_open?(port)
+    shutdown
+    break 
+  end
   $browsers[port] = launch(port)
 end
 
