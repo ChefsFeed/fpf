@@ -1,7 +1,4 @@
 require 'cuba'
-require 'cuba/prelude'
-require 'cuba/render'
-require 'cuba/text_helpers'
 require 'fpf/fetchers'
 require 'fpf/fetcher'
 require 'fpf/logger'
@@ -16,13 +13,6 @@ module FullPageFetcher
 
     use Rack::Session::Cookie, secret: SecureRandom.hex(64)
     use Rack::Protection
-    use Rack::Reloader
-
-    plugin Cuba::Render
-    plugin Cuba::Prelude
-    plugin Cuba::TextHelpers
-
-    settings[:render][:views] = File.join(Dir.pwd, 'lib', 'fpf', 'views')
 
     def fetch_content(path)
       FETCHERS.next do |fetcher|
