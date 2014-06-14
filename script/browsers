@@ -10,7 +10,7 @@ def launch(port)
 
   puts "Launching pjs on port #{port}"
   fork do 
-    Process.exec(*cmd.split)
+    Process.exec(*cmd.split, out: "/dev/null")
   end
 end
 
