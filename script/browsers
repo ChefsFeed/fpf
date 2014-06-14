@@ -7,6 +7,8 @@ def launch(port)
   cmd += " --webdriver=#{port}"
   cmd += " --webdriver-logfile=#{log_file}" 
   cmd += " --webdriver-loglevel=#{log_level}"
+  cmd += " --load-images=false"
+
 
   puts "Launching pjs on port #{port}"
   fork do 
