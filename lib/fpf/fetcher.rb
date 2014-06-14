@@ -1,5 +1,5 @@
-require 'fpf'
-require 'fpf/logger'
+# encoding: utf-8
+require_relative 'logger'
 require 'selenium-webdriver'
 require 'uri'
 

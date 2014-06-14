@@ -1,6 +1,5 @@
-require 'fpf'
-require 'fpf/fetcher'
-require 'fpf/logger'
+require_relative 'fetcher'
+require_relative 'logger'
 require 'set'
 require 'redis'
 

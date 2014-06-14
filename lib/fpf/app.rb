@@ -1,9 +1,7 @@
 require 'cuba'
-require 'fpf/fetchers'
-require 'fpf/fetcher'
+require 'fpf/config'
 require 'fpf/logger'
 require 'rack/protection'
-require 'rack/reloader'
 require 'securerandom'
 
 module FullPageFetcher
@@ -15,7 +13,7 @@ module FullPageFetcher
     use Rack::Protection
 
     def fetch_content(path)
-      FETCHERS.next do |fetcher|
+      Config.fetchers.next do |fetcher|
         fetcher.fetch(path)
       end
     end

@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby
 
+require './lib/fpf/config'
+
 def launch(port)
   log_level = ENV.fetch('FPF_PHANTOM_LOG_LEVEL', 'INFO')
   log_file = "log/webdriver_#{port}.log"
@@ -48,13 +50,10 @@ Signal.trap(:INT)  { shutdown(signal) }
 Signal.trap(:QUIT) { shutdown(signal) }
 Signal.trap(:CLD)  { save_child unless $shutdown }
 
-port_start = ENV.fetch('FPF_PHANTOM_PORT_START', 8910).to_i
-port_count = ENV.fetch('FPF_PHANTOM_PORT_COUNT', 10).to_i
-ports = port_start...(port_start + port_count)
-
 $shutdown = false
 $browsers = {}
-ports.each do |port| 
+
+FullPageFetcher::Config.fetchers_ports.each do |port| 
   if port_open?(port)
     STDERR.puts "Phantom running on #{port}? Can't bind to it. Halt. " if port_open?(port)
     shutdown
