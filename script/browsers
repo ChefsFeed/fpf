@@ -1,46 +1,52 @@
 #!/usr/bin/env ruby
 
-[:INT, :QUIT].each do |signal|
-  Signal.trap(signal) do
-    $browsers.values.each do |wpid| 
-      Process.kill(signal, wpid)
-    end
-  end
-end
+$shutdown = false
 
-port_start = 8910
-port_count = 10
-
-if ENV.has_key?('FPF_PHANTOM_PORT_START')
-  port_start = ENV['FPF_PHANTOM_PORT_START'].to_i
-end
-
-if ENV.has_key?('FPF_PHANTOM_PORT_COUNT')
-  port_count = ENV['FPF_PHANTOM_PORT_COUNT'].to_i
-end
-
-ports = port_start...(port_start + port_count)
-
-ports = 8910...8920
-
-$browsers = {}
-
-log_level = "DEBUG"
-
-ports.each do |port|
+def launch(port)
+  log_level = "DEBUG"
   log_file = "log/webdriver_#{port}.log"
-
   cmd =  "phantomjs"
   cmd += " --webdriver=#{port}"
   cmd += " --webdriver-logfile=#{log_file}" 
-  cmd += " --webdriver-loglevel=#{log_level} > /dev/null 2>&1"
+  cmd += " --webdriver-loglevel=#{log_level}"
 
-  STDOUT.puts "Phantom: #{port}"
-  pid = fork do 
-    Process.exec(cmd)
+  puts "Launching pjs on port #{port}"
+  fork do 
+    Process.exec(*cmd.split)
   end
+end
 
+def shutdown(signal = :QUIT)
+  $shutdown = true
+  $browsers.values.each do |wpid| 
+    Process.kill(signal, wpid)
+  end
+end
+
+[:INT, :QUIT].each do |signal|
+  Signal.trap(signal) { shutdown(signal) }
+end
+
+Signal.trap(:CLD) do
+  cpid = Process.wait
+  if (res = $browsers.rassoc(cpid))
+    port = res.first
+    $browsers[port] = launch(port)
+  end
+end
+
+port_start = ENV.fetch('FPF_PHANTOM_PORT_START', 8910).to_i
+port_count = ENV.fetch('FPF_PHANTOM_PORT_COUNT', 10).to_i
+
+ports = port_start...(port_start + port_count)
+
+$browsers = {}
+
+ports.each do |port|
+  pid = launch(port)
   $browsers[port] = pid
 end
 
 Process.waitall
+
+
