@@ -15,7 +15,6 @@ module FullPageFetcher
       @options ||= {}
       @base_url = @options[:base_url]
       @driver = Selenium::WebDriver.for(:remote, url: @url)
-      logger.info @driver.send :bridge
     end
 
     def fetch(path)
