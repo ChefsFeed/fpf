@@ -38,7 +38,7 @@ module FullPageFetcher
     end
 
     def base_url
-      @base_url ||= 'http://localhost:5002'
+      @base_url ||= ENV['FPF_UPSTREAM_BASE_URL'] || 'http://localhost:5002'
     end
 
     def wait_for(max_times, &block)
