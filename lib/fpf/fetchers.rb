@@ -24,23 +24,20 @@ module FullPageFetcher
         port = checkout
         yield new_fetcher(port)
       ensure
-       checkin(port)
+        checkin(port)
       end
     end
 
     private
 
     def checkout
-      if (port = redis.rpop(available_key))
-        port
-      else
-        wait_for_availability
-      end
+      port = redis.rpop(queue_key)
+      port || wait_for_availability
     end
 
     def wait_for_availability
       wait do
-        port = redis.rpop(available_key)
+        port = redis.rpop(queue_key)
         break port unless port.nil?
       end
     end
@@ -55,17 +52,17 @@ module FullPageFetcher
       end
     end
 
-    def available_key
+    def queue_key
       "fpf:#{Process.ppid}"
     end
 
     def checkin(port)
-      redis.lpush available_key, port
+      redis.lpush queue_key, port
     end
 
     def setup!
-      if redis.exists(available_key)
-        l.warn "Existing key: #{available_key}. Already running on #{Process.ppid} "
+      if redis.exists(queue_key)
+        l.warn "Existing key: #{queue_key}. Already running on #{Process.ppid} "
       else
         (@port_start...(@port_start+@port_size)).each do |port|
           checkin(port)
@@ -81,7 +78,6 @@ module FullPageFetcher
       @redis
     end
 
-
   end
-
 end
+
