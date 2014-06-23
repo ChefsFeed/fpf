@@ -14,6 +14,7 @@ module FullPageFetcher
       @port_size = size
       @options = options || {}
       @max_wait = @options.fetch(:max_wait, 10)
+      @wait_time = @options.fetch(:wait_time, 1)
       @redis = @options.fetch(:redis) { Redis.new }
       setup!
     end
@@ -47,8 +48,8 @@ module FullPageFetcher
     def wait
       @waited = 0
       loop do
-        sleep(1)
-        @waited += 1
+        sleep @wait_time
+        @waited += @wait_time
         yield
         break if @waited > @max_wait
       end
