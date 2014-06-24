@@ -1,8 +1,11 @@
 require_relative 'config'
+require_relative 'logger'
 require 'fileutils'
 
 module FullPageFetcher
   class Cache
+
+    include FullPageFetcher::Logger
 
     def initialize(app)
       @app = app
@@ -14,8 +17,12 @@ module FullPageFetcher
         path = cleanup_path(env['REQUEST_PATH'])
 
         if content = fetch(path)
+          l.info "cache hit"
+
           [200, {}, [content]]
         else
+          l.info "cache miss"
+
           body = @app.call(env).last
           store(path, body)
           [201, {}, body]
