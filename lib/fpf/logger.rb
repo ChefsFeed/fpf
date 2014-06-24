@@ -9,7 +9,7 @@ module FullPageFetcher
         logger.formatter = proc do |sev, date, prog, msg|
           thread_id = sprintf '%x', Thread.current.object_id
           formatted_date = date.strftime "%Y-%m-%d %H:%M:%S"
-          [ formatted_date, sev, thread_id, msg ].join(' ')
+          [ formatted_date, sev, thread_id, msg ].join(' ') + "\n"
         end
       end
     end
