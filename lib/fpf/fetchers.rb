@@ -5,6 +5,8 @@ require 'redis'
 
 module FullPageFetcher
 
+  class NoFetcherAvailableException < Exception; end
+
   class Fetchers
 
     include FullPageFetcher::Logger
@@ -14,7 +16,6 @@ module FullPageFetcher
       @port_size = size
       @options = options || {}
       @max_wait = @options.fetch(:max_wait, 10)
-      @wait_time = @options.fetch(:wait_time, 1)
       @redis = @options.fetch(:redis) { Redis.new }
       setup!
     end
@@ -22,34 +23,26 @@ module FullPageFetcher
     def next
       begin
         port = checkout
+        raise NoFetcherAvailableException.new unless port
         yield new_fetcher(port)
       ensure
-        checkin(port)
+        checkin(port) if port
       end
+    end
+
+    def current_concurrency
+      @port_size - redis.llen(queue_key)
+    end
+
+    def max_concurrency
+      @port_size
     end
 
     private
 
     def checkout
-      port = redis.rpop(queue_key)
-      port || wait_for_availability
-    end
-
-    def wait_for_availability
-      wait do
-        port = redis.rpop(queue_key)
-        break port unless port.nil?
-      end
-    end
-
-    def wait
-      @waited = 0
-      loop do
-        sleep @wait_time
-        @waited += @wait_time
-        yield
-        break if @waited > @max_wait
-      end
+      response = redis.brpop(queue_key, @max_wait)
+      response.last if response
     end
 
     def queue_key
