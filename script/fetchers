@@ -3,7 +3,7 @@
 require './lib/fpf/config'
 
 def launch(port)
-  log_level = ENV.fetch('FPF_PHANTOM_LOG_LEVEL', 'INFO')
+  log_level = ENV.fetch('FPF_PHANTOM_LOG_LEVEL', 'DEBUG')
   log_file = "log/webdriver_#{port}.log"
   cmd =  "phantomjs"
   cmd += " --webdriver=#{port}"
