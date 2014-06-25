@@ -10,6 +10,8 @@ def launch(port)
   cmd += " --webdriver-logfile=#{log_file}" 
   cmd += " --webdriver-loglevel=#{log_level}"
   cmd += " --load-images=false"
+  cmd += " --disk-cache=true"
+  cmd += " --local-storage-path=tmp/phantom_cache"
 
 
   puts "Launching pjs on port #{port}"
