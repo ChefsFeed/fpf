@@ -23,9 +23,11 @@ module FullPageFetcher
         else
           l.info "cache miss"
 
-          body = @app.call(env).last
-          store(path, body)
-          [201, {}, body]
+          status, headers, body = @app.call(env)
+
+          store(path, body) if status.to_s[0] == '2'
+
+          [ status, headers, body ]
         end
       else
         @app.call(env)
