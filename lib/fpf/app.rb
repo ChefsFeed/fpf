@@ -38,7 +38,7 @@ module FullPageFetcher
           l.error "TIMEOUT; no fetchers available - #{req.fullpath}"
           res.status = 503
         ensure
-          l.info sprintf "END #{req.fullpath} - %dms", (Time.now - start_time) * 1000
+          l.info sprintf "END   #{req.fullpath} - %dms", (Time.now - start_time) * 1000
         end
       end
     end

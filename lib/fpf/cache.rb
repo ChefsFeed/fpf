@@ -18,7 +18,7 @@ module FullPageFetcher
 
         content, cache_path = fetch(path)
         if content
-          l.debug "CACHE HIT; serving #{path} from #{cache_path}"
+          l.debug "CACHE - serving #{path} from #{cache_path}"
           [200, {}, [content]]
         else
           status, headers, body, was_successful = send_upstream(env)
@@ -39,7 +39,7 @@ module FullPageFetcher
 
     def store(path, body)
       full_path = cache_path_for(path)
-      l.debug "storing #{path} into #{full_path}"
+      l.debug "STORE #{path} into #{full_path}"
       FileUtils.mkdir_p(File.dirname(full_path))
       File.open(full_path, "w") {|f| f.write(body.first)}
     end
