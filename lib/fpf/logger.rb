@@ -12,7 +12,7 @@ module FullPageFetcher
       @logger ||= ::Logger.new(STDOUT).tap do |logger|
         STDOUT.sync = true
         logger.formatter = proc do |sev, date, prog, msg|
-          [ sev, thread_id, '-',  msg ].join(' ') + "\n"
+          sprintf "%-5s %s - %s\n", sev, thread_id, msg
         end
       end
     end
