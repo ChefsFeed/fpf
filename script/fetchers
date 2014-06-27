@@ -6,15 +6,16 @@ def launch(port)
   log_level = ENV.fetch('FPF_PHANTOM_LOG_LEVEL', 'DEBUG')
   log_file = "log/webdriver_#{port}.log"
   cmd =  "phantomjs"
-  cmd += " --webdriver=#{port}"
+  #BIG FIXME: --webdriver seems to ignore the bind address and just binds to 0.0.0.0,
+  #thus in production we're exposing the ports. We SHOULD NOT do that; need to fix this
+  cmd += " --webdriver=127.0.0.1:#{port}"
   cmd += " --webdriver-logfile=#{log_file}" 
   cmd += " --webdriver-loglevel=#{log_level}"
   cmd += " --load-images=false"
   cmd += " --disk-cache=true"
   cmd += " --local-storage-path=tmp/phantom_cache"
 
-
-  puts "Launching pjs on port #{port}"
+  puts "Launching phantomjs on port #{port}"
   fork do 
     Process.exec(*cmd.split, out: "/dev/null")
   end
