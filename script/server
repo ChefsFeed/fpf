@@ -1,4 +1,11 @@
 #!/usr/bin/env bash
+
 set -x
 
-puma --dir "$PWD" -p ${PORT:-4000} -e ${RACK_ENV:-development} -t ${CONCURRENCY_MIN:-2}:${CONCURRENCY_MAX:-6} -w ${CONCURRENCY_WORKERS:-1} 
+puma \
+  --dir "$PWD" \
+  --port ${PORT:-4000} \
+  --environment ${RACK_ENV:-development} \
+  --threads ${CONCURRENCY_MIN:-2}:${CONCURRENCY_MAX:-6} \
+  --workers ${CONCURRENCY_WORKERS:-1}
+
