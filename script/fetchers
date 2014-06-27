@@ -5,6 +5,7 @@ require './lib/fpf/config'
 def launch(port)
   log_level = ENV.fetch('FPF_PHANTOM_LOG_LEVEL', 'DEBUG')
   log_file = "log/webdriver_#{port}.log"
+
   cmd =  "phantomjs"
   #BIG FIXME: --webdriver seems to ignore the bind address and just binds to 0.0.0.0,
   #thus in production we're exposing the ports. We SHOULD NOT do that; need to fix this
@@ -15,7 +16,7 @@ def launch(port)
   cmd += " --disk-cache=true"
   cmd += " --local-storage-path=tmp/phantom_cache"
 
-  puts "Launching phantomjs on port #{port}"
+  log "Launching phantomjs on port #{port}"
   fork do 
     Process.exec(*cmd.split, out: "/dev/null")
   end
@@ -29,9 +30,8 @@ def shutdown(signal = :QUIT)
 end
 
 def save_child
-  cpid = Process.wait
-  if (res = $browsers.rassoc(cpid))
-    port = res.first
+  current_pid = Process.wait
+  if port = $browsers.rassoc(current_pid)
     $browsers[port] = launch(port)
   end
 end
@@ -39,6 +39,10 @@ end
 def port_open?(port)
   system "nc -z localhost #{port}"
 end 
+
+def log(message)
+  STDERR.puts message
+end
 
 Signal.trap(:INT)  { shutdown(signal) }
 Signal.trap(:QUIT) { shutdown(signal) }
@@ -49,7 +53,7 @@ $browsers = {}
 
 FullPageFetcher::Config.fetchers_ports.each do |port| 
   if port_open?(port)
-    STDERR.puts "Phantom running on #{port}? Can't bind to it. Halt. " if port_open?(port)
+    log "ERROR: port #{port} already open; previous Phantom instance open? Aborting"
     shutdown
     break 
   end
@@ -57,3 +61,4 @@ FullPageFetcher::Config.fetchers_ports.each do |port|
 end
 
 Process.waitall
+
