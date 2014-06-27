@@ -16,16 +16,13 @@ module FullPageFetcher
       if env['REQUEST_METHOD']== 'GET'
         path = cleanup_path(env['REQUEST_PATH'])
 
-        if content = fetch(path)
-          l.info "cache hit"
-
+        content, cache_path = fetch(path)
+        if content
+          l.debug "CACHE - serving #{path} from #{cache_path}"
           [200, {}, [content]]
         else
-          l.info "cache miss"
-
-          status, headers, body = @app.call(env)
-
-          store(path, body) if status.to_s[0] == '2'
+          status, headers, body, was_successful = send_upstream(env)
+          store(path, body) if was_successful
 
           [ status, headers, body ]
         end
@@ -34,15 +31,22 @@ module FullPageFetcher
       end
     end
 
+    def send_upstream(env)
+      status, headers, body = @app.call(env)
+      was_successful = status.to_s[0] == '2'
+      [ status, headers, body, was_successful ]
+    end
+
     def store(path, body)
       full_path = cache_path_for(path)
+      l.debug "STORE #{path} into #{full_path}"
       FileUtils.mkdir_p(File.dirname(full_path))
       File.open(full_path, "w") {|f| f.write(body.first)}
     end
 
     def fetch(path)
       full_path = cache_path_for(path)
-      File.read(full_path) if File.exists?(full_path)
+      [ File.read(full_path), full_path ] if File.exists?(full_path)
     end
 
     def base_path

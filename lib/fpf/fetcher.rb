@@ -19,7 +19,6 @@ module FullPageFetcher
 
     def fetch(path)
       uri = URI.parse(base_url + path)
-      l.info "[WD:#{@port}] Requested path: #{uri}"
       @driver.get uri
 
       wait_for(10) do |n|
