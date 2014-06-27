@@ -36,17 +36,8 @@ def save_child
   end
 end
 
-def port_open?(port, seconds = 1)
-  Timeout::timeout(seconds) do
-    begin
-      TCPSocket.new('localhost', port).close
-      true
-    rescue Errno::ECONNREFUSED, Errno::EHOSTUNREACH
-      false
-    end
-  end
-rescue Timeout::Error
-  false
+def port_open?(port)
+  system "nc -z localhost #{port}"
 end 
 
 Signal.trap(:INT)  { shutdown(signal) }
