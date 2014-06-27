@@ -17,7 +17,7 @@ module FullPageFetcher
         concurrency = sprintf "%02d/%02d",
           Config.fetchers.current_concurrency,
           Config.fetchers.max_concurrency
-        l.info "#{concurrency} - GET #{req.fullpath}"
+        l.info "START #{req.fullpath} - #{concurrency}"
 
         fetcher.fetch(path)
       end
@@ -38,7 +38,7 @@ module FullPageFetcher
           l.error "TIMEOUT; no fetchers available - #{req.fullpath}"
           res.status = 503
         ensure
-          l.debug sprintf "request runtime: %dms", (Time.now - start_time) * 1000
+          l.info sprintf "END #{req.fullpath} - %dms", (Time.now - start_time) * 1000
         end
       end
     end
