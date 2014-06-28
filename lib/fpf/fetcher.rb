@@ -23,6 +23,8 @@ module FullPageFetcher
 
       wait_for(10) do |n|
         begin
+          #FIXME: take this from an env var, or don't wait if no value was given there
+          #FIXME: consider using CSS here for easier config
           element = @driver.find_element(xpath: '//*/meta[starts-with(@property, \'og:image\')]')
           content = element.attribute('content')
           if content && content != ''
