@@ -9,7 +9,7 @@ module FullPageFetcher
 
   class Fetchers
 
-    MAX_LIFETIME_REQUESTS = ENV.fetch('MAX_LIFETIME_REQUESTS', '10').to_i
+    MAX_LIFETIME_REQUESTS = ENV.fetch('FPF_MAX_LIFETIME_REQUESTS', '10').to_i
 
     include FullPageFetcher::Logger
 
@@ -46,7 +46,9 @@ module FullPageFetcher
       response = redis.brpop(queue_key, @max_wait)
       if response
         port = response.last
-        if redis.hget(quota_key, port).to_i > MAX_LIFETIME_REQUESTS
+        current_usage = redis.hget(quota_key, port).to_i
+        logger.info "Current Usage for #{port}: #{current_usage}"
+        if current_usage > MAX_LIFETIME_REQUESTS
           reset(port)
         end
         redis.hincrby(quota_key, port, 1)
@@ -68,9 +70,12 @@ module FullPageFetcher
 
     def reset(port)
       l.debug "killing FPF for #{port} and waiting..."
-      system "kill -w -9 $(lsof -i TCP:#{port} -t)"
+      pid = `lsof -i TCP:#{port} -t`.to_i
+      logger.info "Killing pid: #{pid.inspect}"
+      Process.kill(:TERM, pid)
 
-      while system("nc -z localhost #{port}") != 0
+      sleep 1
+      until system("nc -z localhost #{port}")
         l.debug "waiting for FPF for #{port} to come back up..."
         sleep 1
       end

@@ -13,7 +13,7 @@ module FullPageFetcher
     end
 
     def call(env)
-      if env['REQUEST_METHOD']== 'GET'
+      unless env['REQUEST_METHOD']== 'GET'
         path = cleanup_path(env['REQUEST_PATH'])
 
         content, cache_path = fetch(path)
