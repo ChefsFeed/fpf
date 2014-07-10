@@ -23,6 +23,7 @@ def launch(port)
 end
 
 def shutdown(signal = :QUIT)
+  log "Shutting down..."
   $shutdown = true
   $browsers.values.each do |wpid| 
     Process.kill(signal, wpid)
@@ -31,8 +32,15 @@ end
 
 def save_child
   current_pid = Process.wait
-  if port = $browsers.rassoc(current_pid)
+  log "-> Saving child on pid: #{current_pid.inspect}"
+
+  if port = $browsers.rassoc(current_pid).last
+    log "-> PORT: #{port.inspect}"
+    pid = launch(port)
+    log "-> PID: #{pid.inspect}"
     $browsers[port] = launch(port)
+  else
+    log "x> Can't find fetcher running with pid: #{current_pid} on #{$browsers.inspect}"
   end
 end
 

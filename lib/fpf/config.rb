@@ -26,7 +26,7 @@ module FullPageFetcher
     end
 
     def fetchers_ports
-      (fetchers_port_start...(fetchers_port_start + fetchers_port_count)).flatten.uniq
+      (fetchers_port_start...(fetchers_port_start + fetchers_port_count)).to_a.flatten.uniq
     end
 
   end
