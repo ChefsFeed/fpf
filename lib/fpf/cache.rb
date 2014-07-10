@@ -22,7 +22,15 @@ module FullPageFetcher
           [200, {}, [content]]
         else
           status, headers, body, was_successful = send_upstream(env)
-          store(path, body) if was_successful
+
+          if was_successful
+            content_length = headers["Content-Length"].to_i
+            unless content_length > 500
+              l.error "CACHE - #{path} looks too short; #{content_length} bytes -- discarding"
+            else
+              store(path, body)
+            end
+          end
 
           [ status, headers, body ]
         end
