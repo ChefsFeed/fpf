@@ -46,12 +46,12 @@ module FullPageFetcher
       response = redis.brpop(queue_key, @max_wait)
       if response
         port = response.last
-        current_usage = redis.hget(quota_key, port).to_i
+        current_usage = redis.hget(request_counter_key, port).to_i
         logger.info "Current Usage for #{port}: #{current_usage}"
         if current_usage > MAX_LIFETIME_REQUESTS
           reset(port)
         end
-        redis.hincrby(quota_key, port, 1)
+        redis.hincrby(request_counter_key, port, 1)
         port
       end
     end
@@ -60,7 +60,7 @@ module FullPageFetcher
       "fpf:#{Process.ppid}"
     end
 
-    def quota_key
+    def request_counter_key
       "fpf:#{Process.ppid}:requests_counter"
     end
 
@@ -72,7 +72,9 @@ module FullPageFetcher
       l.debug "killing FPF for #{port} and waiting..."
       pid = `lsof -i TCP:#{port} -t`.to_i
       logger.info "Killing pid: #{pid.inspect}"
-      Process.kill(:TERM, pid)
+      Process.kill(:KILL, pid)
+
+      redis.hset request_counter_key, port, 0
 
       sleep 1
       until system("nc -z localhost #{port}")

@@ -8,7 +8,7 @@ def launch(port)
 
   cmd =  "phantomjs"
   #BIG FIXME: --webdriver seems to ignore the bind address and just binds to 0.0.0.0,
-  #thus in production we're exposing the ports. We SHOULD NOT do that; need to fix this
+  #thus in production we're exposing the ports. We SHOULD NOT do that; need to fix this ASAP
   cmd += " --webdriver=127.0.0.1:#{port}"
   cmd += " --webdriver-logfile=#{log_file}" 
   cmd += " --webdriver-loglevel=#{log_level}"
@@ -16,45 +16,44 @@ def launch(port)
   cmd += " --disk-cache=true"
   cmd += " --local-storage-path=tmp/phantom_cache"
 
-  log "Launching phantomjs on port #{port}"
   fork do 
     Process.exec(*cmd.split, out: "/dev/null")
   end
 end
 
 def shutdown(signal = :QUIT)
-  log "Shutting down..."
+  log "FPF Shutting down..."
   $shutdown = true
   $browsers.values.each do |wpid| 
     Process.kill(signal, wpid)
   end
 end
 
-def save_child
-  current_pid = Process.wait
-  log "-> Saving child on pid: #{current_pid.inspect}"
-
-  if port = $browsers.rassoc(current_pid).last
-    log "-> PORT: #{port.inspect}"
-    pid = launch(port)
-    log "-> PID: #{pid.inspect}"
+def relaunch_children
+  find_out_missing_ports.each do |port|
+    log "-> relaunching phantomjs for port: #{port.inspect}"
     $browsers[port] = launch(port)
-  else
-    log "x> Can't find fetcher running with pid: #{current_pid} on #{$browsers.inspect}"
+  end
+end
+
+def find_out_missing_ports
+  $browsers.keys.select do |port|
+    not port_open?(port)
   end
 end
 
 def port_open?(port)
-  system "nc -z localhost #{port}"
+  system "nc -z localhost #{port} 2>/dev/null 1>/dev/null"
 end 
 
 def log(message)
   STDERR.puts message
 end
 
-Signal.trap(:INT)  { shutdown(signal) }
-Signal.trap(:QUIT) { shutdown(signal) }
-Signal.trap(:CLD)  { save_child unless $shutdown }
+Signal.trap(:INT)  { shutdown(:INT) }
+Signal.trap(:QUIT) { shutdown(:QUIT) }
+Signal.trap(:TERM) { shutdown(:TERM) }
+Signal.trap(:CLD)  { relaunch_children unless $shutdown }
 
 $shutdown = false
 $browsers = {}
@@ -65,6 +64,7 @@ FullPageFetcher::Config.fetchers_ports.each do |port|
     shutdown
     break 
   end
+  log "Launching phantomjs on port #{port}"
   $browsers[port] = launch(port)
 end
 
