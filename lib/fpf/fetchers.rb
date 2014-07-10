@@ -9,6 +9,8 @@ module FullPageFetcher
 
   class Fetchers
 
+    MAX_LIFETIME_REQUESTS = ENV.fetch('MAX_LIFETIME_REQUESTS', '10').to_i
+
     include FullPageFetcher::Logger
 
     def initialize(start, size, options = nil)
@@ -42,15 +44,36 @@ module FullPageFetcher
 
     def checkout
       response = redis.brpop(queue_key, @max_wait)
-      response.last if response
+      if response
+        port = response.last
+        if redis.hget(quota_key, port).to_i > MAX_LIFETIME_REQUESTS
+          reset(port)
+        end
+        redis.hincrby(quota_key, port, 1)
+        port
+      end
     end
 
     def queue_key
       "fpf:#{Process.ppid}"
     end
 
+    def quota_key
+      "fpf:#{Process.ppid}:requests_counter"
+    end
+
     def checkin(port)
       redis.lpush queue_key, port
+    end
+
+    def reset(port)
+      l.debug "killing FPF for #{port} and waiting..."
+      system "kill -w -9 $(lsof -i TCP:#{port} -t)"
+
+      while system("nc -z localhost #{port}") != 0
+        l.debug "waiting for FPF for #{port} to come back up..."
+        sleep 1
+      end
     end
 
     def setup!
