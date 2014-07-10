@@ -1,2 +1,2 @@
 server: sleep 5 ; bundle exec script/server
-browsers: bundle exec script/fetchers
+fetchers: bundle exec script/fetchers
