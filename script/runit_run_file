@@ -1,0 +1,17 @@
+#!/bin/sh
+
+#sample Runit run file; must exec (and block) during the lifetime of the process
+
+#FIXME: put this elsewhere
+export HOME=/root
+export PATH="$HOME/.rbenv/bin:$PATH"
+eval "$(rbenv init -)"
+cd /opt/fpf/
+
+#HACK: kill any preexisting phantomjs processes
+kill -w -9 $(lsof -i TCP:58910-58920 -t)
+#HACK: Kill any puma running on 26001
+lsof -t -twni tcp:26001 | xargs kill -9 -w
+
+exec /usr/local/bin/fgdaemon bundle exec foreman start 2>&1
+
