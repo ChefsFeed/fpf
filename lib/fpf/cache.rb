@@ -25,7 +25,11 @@ module FullPageFetcher
 
           if was_successful
             content_length = headers["Content-Length"].to_i
-            unless content_length > 500
+
+            #HACK: robots.txt can be very small; make an exception for that
+            looks_ok = content_length > 500 || path =~ /robots\.txt/
+
+            unless looks_ok
               l.error "CACHE - #{path} looks too short; #{content_length} bytes -- discarding"
             else
               store(path, body)
