@@ -14,7 +14,8 @@ module FullPageFetcher
       @port = URI.parse(url).port
       @options ||= {}
       @base_url = @options[:base_url]
-      @driver = Selenium::WebDriver.for(:remote, url: @url)
+
+      @driver = build_driver_for @url
     end
 
     def fetch(path)
@@ -52,6 +53,19 @@ module FullPageFetcher
         break thing if @times >= max_times
       end
     end
+
+    def build_driver_for(url)
+      #FIXME: I adapted this from the code from Firefox but it does not work for :remote;
+      #@profile ||= begin
+      #  user_agent = ENV['USER_AGENT'] || "FullPageFetcherbot/1.0 (+http://www.chefsfeed.com)"
+
+      #  profile = Selenium::WebDriver::Remote::Profile.new
+      #  profile['general.useragent.override'] = user_agent
+      #end
+      Selenium::WebDriver.for :remote, url: url
+    end
+
   end
 
 end
+
